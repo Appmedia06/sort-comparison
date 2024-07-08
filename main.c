@@ -24,13 +24,24 @@ static int cmpuint64(const void *a, const void *b)
     return *(uint64_t *)a < *(uint64_t *)b;
 }
 
-void rand_generate_list(struct list_head *head, size_t size)
+void rand_generate_list(struct list_head *head, size_t size, size_t rand_size)
 {
     srand(time(NULL));
+    size_t tmp = 0;
     char *str = malloc(70 * sizeof(char));
     for (size_t i = 0; i < size; i++) {
-        sprintf(str, "%d", rand());
+        tmp = (i >= rand_size) ? i : (size_t)rand();
+        sprintf(str, "%ld", tmp);
         q_insert_tail(head, str);
+    }
+}
+
+void rand_generate_arr(uint64_t *arr, size_t size, size_t rand_size)
+{
+    size_t tmp;
+    for (size_t i = 0; i < size; ++i) {
+        tmp = (i >= rand_size) ? i : (size_t)rand();
+        arr[i] = tmp;
     }
 }
 
@@ -38,7 +49,7 @@ void rand_generate_list(struct list_head *head, size_t size)
 int main(int argc, char *argv[])
 {
     if (argc < 3) {
-        printf("usage: main <sort type> <size>\n");
+        printf("usage: main <sort type> <size> <rand size>\n");
         return -1;
     }
 
@@ -54,12 +65,19 @@ int main(int argc, char *argv[])
         return -3;
     }
 
+    size_t rand_size = 0;
+    if (!sscanf(argv[3], "%ld", &rand_size)) {
+        printf("Invaild rand_size %s\n", argv[3]);
+        return -3;
+    }
+
+
     size_t comparison_count = 0;
     struct timespec start, end;
 
     if (sort_type == 0) {
         struct list_head *head = q_new();
-        rand_generate_list(head, size);
+        rand_generate_list(head, size, rand_size);
         clock_gettime(CLOCK_MONOTONIC, &start);
         comparison_count = list_sort(NULL, head, cmp);
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -67,7 +85,7 @@ int main(int argc, char *argv[])
     }
     else if (sort_type == 1) {
         struct list_head *head = q_new();
-        rand_generate_list(head, size);
+        rand_generate_list(head, size, rand_size);
         clock_gettime(CLOCK_MONOTONIC, &start);
         comparison_count = timsort(NULL, head, cmp);
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -75,9 +93,7 @@ int main(int argc, char *argv[])
     }
     else if (sort_type == 2) {
         uint64_t *arr = malloc(sizeof(uint64_t) * size);
-        for (size_t i = 0; i < size; ++i) {
-            arr[i] = rand();
-        }                                      
+        rand_generate_arr(arr, size, rand_size);
         clock_gettime(CLOCK_MONOTONIC, &start);
         comparison_count = pdqsort(arr, size, sizeof(uint64_t), cmpuint64, NULL);
         clock_gettime(CLOCK_MONOTONIC, &end);

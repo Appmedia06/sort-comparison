@@ -227,7 +227,7 @@ size_t timsort(void *priv, struct list_head *head, list_cmp_func_t cmp)
         stk0 = stk0->prev, stk1 = stk1->prev;
     if (stk_size <= 1) {
         build_prev_link(head, head, stk0);
-        return 0;
+        return comparison_count;
     }
     merge_final(priv, cmp, head, stk1, stk0);
     return comparison_count;
